@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>VoiceAgent LiveKit — Demo Sénégal</title>
+    <style>
+      /* Styles basiques pour l'interface */
+      body { font-family: system-ui, sans-serif; margin: 16px; }
+      button { padding: 10px 16px; margin-right: 8px; }
+      .log { white-space: pre-wrap; background: #f7f7f7; padding: 8px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h1>VoiceAgent LiveKit — Demo</h1>
+    
+    <!-- Section de configuration : saisie du nom de la salle et de l'identité de l'utilisateur -->
+    <p>
+      <label>Room:
+        <input id="room" value="demo-sn" />
+      </label>
+      <label>Identité:
+        <input id="identity" value="web-client-1" />
+      </label>
+    </p>
+    
+    <!-- Boutons de contrôle et option push-to-talk -->
+    <p>
+      <button id="btnJoin">Rejoindre</button>
+      <button id="btnLeave" disabled>Quitter</button>
+      <label><input id="ptt" type="checkbox" /> Push-to-talk</label>
+    </p>
+
+    <!-- Lecteur audio pour diffuser la voix de l'agent (autoplay pour démarrage automatique) -->
+    <audio id="player" autoplay playsinline></audio>
+    
+    <!-- Zone d'affichage des logs pour suivre les événements en temps réel -->
+    <div class="log" id="log"></div>
+
+    <script type="module">
+      // ============================================================
+      // IMPORTS - Import du SDK LiveKit depuis un CDN
+      // ============================================================
+      // LiveKit est une plateforme WebRTC qui facilite les communications audio/vidéo en temps réel
+      import { Room, RoomEvent, Track } from 'https://cdn.jsdelivr.net/npm/livekit-client/+esm';
+
+      // ============================================================
+      // RÉCUPÉRATION DES ÉLÉMENTS DOM
+      // ============================================================
+      const btnJoin = document.getElementById('btnJoin');     // Bouton pour rejoindre la salle
+      const btnLeave = document.getElementById('btnLeave');   // Bouton pour quitter la salle
+      const roomInput = document.getElementById('room');      // Champ de saisie du nom de la salle
+      const idInput = document.getElementById('identity');    // Champ de saisie de l'identité utilisateur
+      const player = document.getElementById('player');       // Élément audio pour écouter l'agent vocal
+      const logEl = document.getElementById('log');           // Zone d'affichage des messages de log
+      const ptt = document.getElementById('ptt');             // Checkbox pour activer le mode push-to-talk
+
+      // ============================================================
+      // VARIABLES GLOBALES
+      // ============================================================
+      let room;  // Instance de la Room LiveKit (stockée globalement pour y accéder lors de la déconnexion)
+
+      // ============================================================
+      // FONCTION UTILITAIRE - Affichage des logs
+      // ============================================================
+      // Fonction pour ajouter un message dans la zone de log
+      function log(msg) { logEl.textContent += msg + '\n'; }
+
+      // ============================================================
+      // FONCTION D'AUTHENTIFICATION - Récupération du token LiveKit
+      // ============================================================
+      // Cette fonction contacte notre serveur backend pour obtenir :
+      // - un token d'authentification LiveKit (sécurisé)
+      // - l'URL du serveur LiveKit à utiliser
+      async function getToken(roomName, identity) {
+        const res = await fetch(`/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`);
+        if (!res.ok) throw new Error('Token server error');
+        const { token, url } = await res.json();
+        return { token, url };
+      }
+
+      // ============================================================
+      // FONCTION PRINCIPALE - Rejoindre la salle audio
+      // ============================================================
+      async function join() {
+        // Désactiver le bouton "Rejoindre" pour éviter les doubles clics
+        btnJoin.disabled = true;
+        
+        // Récupérer les valeurs saisies par l'utilisateur
+        const roomName = roomInput.value;
+        // Si pas d'identité fournie, en générer une aléatoire (ex: web-x7k9m2)
+        const identity = idInput.value || `web-${Math.random().toString(36).slice(2,8)}`;
+
+        // ============================================================
+        // CONFIGURATION AUDIO - Paramètres optimaux pour la voix
+        // ============================================================
+        // Ces options configurent le microphone pour une qualité vocale optimale
+        const audioOpts = {
+          audio: {
+            echoCancellation: true,     // Annulation d'écho (évite le retour audio)
+            noiseSuppression: true,     // Suppression du bruit de fond
+            channelCount: 1,            // Mono (1 canal suffit pour la voix)
+            sampleRate: 48000,          // 48kHz (qualité standard pour WebRTC)
+          }
+        };
+
+        try {
+          // ============================================================
+          // ÉTAPE 1 : AUTHENTIFICATION
+          // ============================================================
+          // Récupérer le token et l'URL du serveur LiveKit
+          const { token, url } = await getToken(roomName, identity);
+          
+          // ============================================================
+          // ÉTAPE 2 : CRÉATION DE LA ROOM LIVEKIT
+          // ============================================================
+          // Créer une instance Room avec des paramètres optimisés pour la stabilité
+          room = new Room({
+            adaptiveStream: false,                          // Désactiver l'adaptation automatique du débit
+            dynacast: false,                                // Désactiver la diffusion dynamique
+            publishDefaults: { 
+              dtx: true,                                    // DTX (Discontinuous Transmission) : économise la bande passante en silence
+              stopMicOnMute: false                          // Ne pas arrêter le micro quand on mute
+            },
+            audioCaptureDefaults: { 
+              autoGainControl: false                        // Désactiver le contrôle automatique du gain
+            },
+            // Configuration de connexion plus robuste
+            reconnectPolicy: {
+              nextRetryDelayInMs: (context) => Math.min(context.retryCount * 1000, 5000)
+            }
+          });
+
+          // ============================================================
+          // ÉTAPE 3 : CONFIGURATION DES ÉVÉNEMENTS
+          // ============================================================
+          room
+            // Événement : quand on est connecté à la salle
+            .on(RoomEvent.Connected, () => log('Connecté à la room.'))
+            
+            // Événement : quand on est déconnecté de la salle
+            .on(RoomEvent.Disconnected, () => log('Déconnecté.'))
+            
+            // Événement : quand on reçoit un nouveau flux audio (typiquement de l'agent vocal)
+            .on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+              if (track.kind === Track.Kind.Audio) {
+                // Brancher le flux audio du worker/agent (synthèse vocale TTS) vers le lecteur audio
+                const el = track.attach();
+                player.srcObject = el.srcObject;
+                log(`Audio abonné: ${participant.identity}`);
+              }
+            });
+
+          // ============================================================
+          // ÉTAPE 4 : CONNEXION À LA SALLE
+          // ============================================================
+          // Se connecter au serveur LiveKit avec l'URL et le token
+          await room.connect(url, token);
+          
+          // Attendre un peu pour que la connexion soit stable
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // ============================================================
+          // ÉTAPE 5 : PUBLICATION DU MICROPHONE
+          // ============================================================
+          // Activer le microphone avec les paramètres audio optimisés
+          // Dans les versions récentes, on utilise setMicrophoneEnabled au lieu de createLocalTracks
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true, audioOpts);
+            
+            // Compter les participants de manière sécurisée
+            const participantCount = room.participants ? room.participants.size + 1 : 1;
+            log(`Micro activé (Opus). Participants: ${participantCount}`);
+          } catch (micError) {
+            log(`Erreur activation micro: ${micError.message}`);
+            // Réessayer une fois
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await room.localParticipant.setMicrophoneEnabled(true, audioOpts);
+            log(`Micro activé après retry.`);
+          }
+
+          // ============================================================
+          // ÉTAPE 6 : MODE PUSH-TO-TALK (OPTIONNEL)
+          // ============================================================
+          // Si l'utilisateur a coché la case push-to-talk
+          if (ptt.checked) {
+            // Commencer avec le micro muet
+            await room.localParticipant.setMicrophoneEnabled(false);
+            // Activer le micro quand on appuie sur la barre espace
+            window.addEventListener('keydown', e => { 
+              if (e.code === 'Space') room.localParticipant.setMicrophoneEnabled(true); 
+            });
+            // Désactiver le micro quand on relâche la barre espace
+            window.addEventListener('keyup',   e => { 
+              if (e.code === 'Space') room.localParticipant.setMicrophoneEnabled(false);  
+            });
+            log('Mode push-to-talk: barre espace pour parler.');
+          }
+
+          // Activer le bouton "Quitter" maintenant que nous sommes connectés
+          btnLeave.disabled = false;
+        } catch (e) {
+          // En cas d'erreur, afficher le message et réactiver le bouton "Rejoindre"
+          log('Erreur join: ' + e.message);
+          btnJoin.disabled = false;
+        }
+      }
+
+      // ============================================================
+      // FONCTION DE DÉCONNEXION - Quitter la salle
+      // ============================================================
+      async function leave() {
+        // Si une room existe, se déconnecter proprement
+        if (room) { await room.disconnect(); }
+        // Mettre à jour l'état des boutons
+        btnLeave.disabled = true;
+        btnJoin.disabled = false;
+      }
+
+      // ============================================================
+      // ATTACHEMENT DES GESTIONNAIRES D'ÉVÉNEMENTS
+      // ============================================================
+      // Connecter les fonctions aux boutons
+      btnJoin.onclick = join;
+      btnLeave.onclick = leave;
+    </script>
+  </body>
+</html>

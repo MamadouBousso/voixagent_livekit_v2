@@ -1,0 +1,7 @@
+# server/requirements.txt
+# Dépendances pour le serveur FastAPI qui génère les tokens LiveKit
+
+fastapi              # Framework web moderne et rapide
+uvicorn[standard]    # Serveur ASGI pour exécuter FastAPI
+python-dotenv        # Pour charger les variables d'environnement depuis .env
+livekit              # SDK LiveKit pour Python (génération de tokens JWT)

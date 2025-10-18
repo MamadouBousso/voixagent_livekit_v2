@@ -1,0 +1,6 @@
+livekit-agents
+livekit-plugins-openai
+livekit-plugins-elevenlabs
+livekit-plugins-silero
+python-dotenv
+uvicorn[standard]
