@@ -1,0 +1,43 @@
+{
+  "llm": {
+    "provider_name": "openai",
+    "model": "gpt-4o-mini",
+    "api_key": "your-openai-api-key",
+    "temperature": 0.7,
+    "max_tokens": 1000,
+    "extra_params": {}
+  },
+  "stt": {
+    "provider_name": "openai",
+    "model": "whisper-1",
+    "api_key": "your-openai-api-key",
+    "extra_params": {}
+  },
+  "tts": {
+    "provider_name": "openai",
+    "model": "tts-1",
+    "voice_id": "alloy",
+    "api_key": "your-openai-api-key",
+    "extra_params": {}
+  },
+  "vad": {
+    "provider_name": "silero",
+    "model": "silero-vad",
+    "extra_params": {}
+  },
+  "enabled_plugins": [
+    {
+      "plugin_name": "example",
+      "enabled": true,
+      "config": {
+        "custom_setting": "value"
+      }
+    }
+  ],
+  "instructions": "You are a friendly, concise assistant. Keep answers short and helpful.",
+  "enable_barge_in": false,
+  "min_endpointing_delay": 0.5,
+  "max_response_time": 30.0,
+  "enable_metrics": true,
+  "metrics_retention_hours": 24
+}

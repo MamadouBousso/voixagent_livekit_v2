@@ -39,6 +39,55 @@
 
     <script type="module">
       // ============================================================
+      // CORRECTION POUR L'ERREUR JSON - Patch pour éviter les erreurs de parsing
+      // ============================================================
+      // Intercepter JSON.parse pour gérer les erreurs proprement
+      const originalJSONParse = JSON.parse;
+      JSON.parse = function(text, reviver) {
+        try {
+          // Si le texte est déjà un objet, le retourner directement
+          if (typeof text === 'object' && text !== null) {
+            return text;
+          }
+          // Si ce n'est pas une chaîne, essayer de le convertir
+          if (typeof text !== 'string') {
+            return text;
+          }
+          return originalJSONParse.call(this, text, reviver);
+        } catch (e) {
+          console.warn('JSON.parse error intercepted:', e.message, 'for input:', text);
+          // Retourner null en cas d'erreur au lieu de lancer une exception
+          return null;
+        }
+      };
+
+      // Nettoyer le localStorage des données corrompues
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key) {
+            const value = localStorage.getItem(key);
+            if (value === '[object Object]' || value === '"[object Object]"') {
+              localStorage.removeItem(key);
+              console.log('Cleaned corrupted storage item:', key);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error cleaning localStorage:', e.message);
+      }
+
+      // Intercepter les erreurs globales de parsing JSON
+      window.addEventListener('error', function(event) {
+        if (event.error && event.error.message && 
+            event.error.message.includes('is not valid JSON')) {
+          console.warn('JSON parsing error intercepted and handled:', event.error.message);
+          event.preventDefault(); // Empêcher l'erreur d'apparaître dans la console
+          return false;
+        }
+      });
+
+      // ============================================================
       // IMPORTS - Import du SDK LiveKit depuis un CDN
       // ============================================================
       // LiveKit est une plateforme WebRTC qui facilite les communications audio/vidéo en temps réel

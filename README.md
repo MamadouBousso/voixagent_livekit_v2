@@ -1,194 +1,289 @@
-# 🎤 VoiceAgent LiveKit v2 - Agent Vocal IA
+# 🤖 Système d'Agent Vocal Intelligent
 
-![LiveKit](https://img.shields.io/badge/LiveKit-v2.0-blue?style=flat-square&logo=livekit)
-![OpenAI](https://img.shields.io/badge/OpenAI-Integration-green?style=flat-square&logo=openai)
-![FastAPI](https://img.shields.io/badge/FastAPI-Server-red?style=flat-square&logo=fastapi)
-![Version](https://img.shields.io/badge/Version-2.0-gold?style=flat-square)
+Un système d'agent vocal modulaire basé sur LiveKit WebRTC avec architecture industrielle, plugins extensibles et configuration NO-CODE.
 
-Application d'agent vocal en temps réel utilisant LiveKit, OpenAI pour la reconnaissance vocale, traitement du langage naturel et synthèse vocale. Version 2 avec améliorations et optimisations.
+## 🚀 Démarrage Rapide
+
+### ⚡ **5 Minutes** - Guide Express
+Voir **[QUICK_START_GUIDE.md](QUICK_START_GUIDE.md)** pour un démarrage ultra-rapide.
+
+### 🏗️ **Construction Complète** - Tutoriel Détaillé  
+Voir **[STEP_BY_STEP_TUTORIAL.md](STEP_BY_STEP_TUTORIAL.md)** pour construire l'application depuis zéro.
+
+### **Démarrage Standard**
+```bash
+# Installer et configurer
+make install
+make setup
+
+# Démarrer le système complet
+make start
+
+# Voir les métriques
+make metrics
+```
+
+## 📋 Commandes Principales
+
+### 🎛️ Gestion des Services
+```bash
+make start              # Démarrer serveur + worker
+make stop               # Arrêter tous les services
+make stop-server        # Arrêter uniquement le serveur
+make stop-worker        # Arrêter uniquement le worker
+make restart            # Redémarrer les services
+make status             # Statut des services
+```
+
+### ⚙️ Configuration NO-CODE
+```bash
+make config-show                     # Voir la configuration
+make change-llm-openai              # Changer vers GPT-4o
+make change-tts-elevenlabs          # Changer vers ElevenLabs
+make config-interactive             # Configuration interactive
+```
+
+### 🔌 Gestion des Plugins
+```bash
+make plugins                        # Lister les plugins
+make plugin-add-sentiment           # Ajouter analyse sentiments
+make plugin-add-filter              # Ajouter filtre contenu
+make plugin-demo                    # Démonstration plugins
+```
+
+### 📊 Monitoring
+```bash
+make metrics                        # Métriques temps réel
+make metrics-detailed               # Métriques détaillées
+make logs                           # Logs des services
+make debug                          # Mode debug complet
+```
 
 ## 🏗️ Architecture
 
-Le projet est composé de 3 parties :
+### Design Patterns
+- **Factory**: Création des providers (LLM, STT, TTS)
+- **Singleton**: Gestionnaire de sessions
+- **Builder**: Construction de configuration
+- **Dependency Injection**: Résolution des services
+- **Observer**: Collecte des métriques
 
-1. **Client** (`client/`) : Interface web HTML/JavaScript
-2. **Serveur** (`serveur/`) : API FastAPI pour générer les tokens d'authentification
-3. **Worker** (`worker/`) : Agent vocal IA qui traite les conversations
+### Composants
+```
+serveur/          # FastAPI (tokens, métriques)
+worker/           # Agent LiveKit modulaire  
+client/           # Interface web
+├── core/         # Architecture modulaire
+├── plugins/      # Extensions (sentiment, filtrage, mémoire)
+└── tests/        # Suite de tests complète
+```
 
-## 📋 Prérequis
+## 🔧 Providers Supportés
 
-- Python 3.9 ou supérieur
-- Compte LiveKit (gratuit sur [livekit.cloud](https://livekit.cloud))
-- Clé API OpenAI (pour STT, LLM et TTS)
-- Git (pour cloner le repository)
+### LLM (Large Language Model)
+- **OpenAI**: GPT-4o, GPT-4o-mini
+- **Anthropic**: Claude-3-sonnet
 
-## 🚀 Installation rapide
+### STT (Speech-to-Text)  
+- **OpenAI**: Whisper-1
+- **Google**: Google Speech
 
-### 1. Cloner le repository
+### TTS (Text-to-Speech)
+- **OpenAI**: TTS-1, TTS-1-HD (voix: alloy, nova, echo)
+- **ElevenLabs**: Eleven_turbo_v2
+
+### VAD (Voice Activity Detection)
+- **Silero**: Silero VAD
+
+## 🔌 Plugins Disponibles
+
+### Analyse des Sentiments
+```bash
+make plugin-add-sentiment
+```
+- Détection automatique de l'émotion utilisateur
+- Adaptation du ton de réponse
+- Escalade pour clients mécontents
+
+### Filtrage de Contenu
+```bash
+make plugin-add-filter
+```
+- Protection contre contenu inapproprié
+- Détection et blocage du spam
+- Messages de remplacement polis
+
+### Mémoire Conversationnelle
+```bash
+make plugin-add-memory
+```
+- Mémorisation du contexte des conversations
+- Persistance des sessions
+- Recommandations contextuelles
+
+## 📊 Métriques et Monitoring
+
+### Types de Métriques
+- **Performance**: Latence STT/LLM/TTS, TTFT, TTFB
+- **Sessions**: Sessions actives, durée, succès/échecs
+- **Plugins**: Métriques par plugin
+
+### Visualisation
+```bash
+make metrics          # Métriques simples
+make metrics-watch    # Surveillance continue
+make metrics-sessions # Sessions actives
+```
+
+## 🧪 Tests et Validation
+
+### Tests Principaux
+```bash
+make test           # Tous les tests (recommandé)
+make test-quick     # Test rapide de syntaxe
+make test-unit      # Tests unitaires uniquement
+make test-help      # Aide pour tous les tests disponibles
+```
+
+### Tests Spécialisés
+```bash
+make test-coverage  # Tests avec couverture de code
+make test-plugins   # Tests des plugins uniquement
+make test-providers # Tests des providers uniquement
+make test-ci        # Tests rapides pour CI/CD
+make full-test      # Test système complet
+```
+
+## 🔐 Configuration
+
+### Variables d'Environnement
+Créer un fichier `.env` basé sur `worker/config_example.env`:
 
 ```bash
-git clone https://github.com/MamadouBousso/voixagent_livekit_v2.git
-cd voixagent_livekit_v2
-```
+# LiveKit
+LIVEKIT_URL=wss://your-server.livekit.cloud
+LIVEKIT_API_KEY=your-api-key
+LIVEKIT_API_SECRET=your-secret
 
-### 2. Configuration LiveKit
-
-Créez un compte gratuit sur [livekit.cloud](https://livekit.cloud) et récupérez :
-- L'URL de votre projet (ex: `wss://votre-projet.livekit.cloud`)
-- La clé API (API Key)
-- Le secret API (API Secret)
-
-### 2. Installation du serveur
-
-```bash
-cd serveur
-
-# Créer un environnement virtuel (recommandé)
-python -m venv venv
-source venv/bin/activate  # Sur macOS/Linux
-# ou
-venv\\Scripts\\activate  # Sur Windows
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Configurer les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos vraies valeurs
-```
-
-### 3. Installation du worker
-
-```bash
-cd worker
-
-# Créer un environnement virtuel (recommandé)
-python -m venv venv
-source venv/bin/activate  # Sur macOS/Linux
-# ou
-venv\\Scripts\\activate  # Sur Windows
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Configurer les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos vraies valeurs
-```
-
-## ▶️ Lancement de l'application
-
-### Terminal 1 : Démarrer le serveur
-
-```bash
-cd serveur
-source venv/bin/activate  # Activer l'environnement virtuel
-uvicorn main:app --reload --port 8000
-```
-
-Le serveur sera accessible sur : `http://localhost:8000`
-
-### Terminal 2 : Démarrer le worker
-
-```bash
-cd worker
-source venv/bin/activate  # Activer l'environnement virtuel
-python app.py dev
-```
-
-Le worker se connecte à LiveKit et attend les participants.
-
-### Utiliser l'interface web
-
-1. Ouvrez votre navigateur sur : `http://localhost:8000`
-2. Entrez un nom de salle (ex: `demo-sn`)
-3. Entrez votre identité (ex: `web-client-1`)
-4. Cliquez sur "Rejoindre"
-5. Autorisez l'accès au microphone
-6. Commencez à parler avec l'agent vocal !
-
-## 🔧 Configuration avancée
-
-### Configuration des variables d'environnement
-
-**Serveur** (`serveur/.env` ou variables d'environnement) :
-```env
-LIVEKIT_URL=wss://votre-projet.livekit.cloud
-LIVEKIT_API_KEY=votre_clé_api_livekit
-LIVEKIT_API_SECRET=votre_secret_livekit
-```
-
-**Worker** (`worker/.env` ou variables d'environnement) :
-```env
-LIVEKIT_URL=wss://votre-projet.livekit.cloud
-LIVEKIT_API_KEY=votre_clé_api_livekit
-LIVEKIT_API_SECRET=votre_secret_livekit
-OPENAI_API_KEY=votre_clé_api_openai
-AGENT_INSTRUCTIONS=You are a friendly, concise assistant.
-STT_MODEL=whisper-1
+# LLM
+LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
-TTS_MODEL=tts-1
-TTS_VOICE_ID=alloy
+OPENAI_API_KEY=your-openai-key
+
+# STT/TTS
+STT_PROVIDER=openai
+STT_MODEL=whisper-1
+TTS_PROVIDER=openai
+TTS_MODEL=tts-1-hd
+TTS_VOICE_ID=nova
 ```
 
-## 🎯 Fonctionnalités
-
-- ✅ Conversation vocale en temps réel avec WebRTC
-- ✅ Reconnaissance vocale automatique (OpenAI Whisper)
-- ✅ Réponses intelligentes (OpenAI GPT-4o-mini)
-- ✅ Synthèse vocale naturelle (OpenAI TTS)
-- ✅ Détection d'activité vocale (VAD) avec Silero
-- ✅ Mode push-to-talk optionnel
-- ✅ Interface web responsive et moderne
-- ✅ Configuration flexible via variables d'environnement
-
-## 🐛 Dépannage
-
-Pour une aide détaillée, consultez le fichier [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
-
-### Problèmes courants
-
-**Le serveur ne démarre pas :**
-- Vérifiez que le fichier `.env` existe dans `serveur/`
-- Vérifiez que toutes les variables d'environnement sont définies
-
-**Le worker ne se connecte pas (erreur 401) :**
-- Vérifiez les identifiants LiveKit dans `worker/.env`
-- Assurez-vous que l'URL commence par `wss://`
-- Vérifiez que vos clés API LiveKit sont correctes
-
-**L'agent ne répond pas :**
-- Vérifiez votre clé API OpenAI
-- Consultez les logs du worker pour les erreurs
-- Assurez-vous que le microphone est autorisé
-
-**Pas de son :**
-- Vérifiez l'autorisation du microphone dans le navigateur
-- Vérifiez que le lecteur audio n'est pas muet
-- Ouvrez la console du navigateur pour voir les erreurs
+### Configuration via CLI
+```bash
+make config-interactive    # Configuration guidée
+make config-show          # Vérifier la configuration
+```
 
 ## 📚 Documentation
 
-- [LiveKit Documentation](https://docs.livekit.io/)
-- [LiveKit Agents SDK](https://docs.livekit.io/agents/)
-- [OpenAI API](https://platform.openai.com/docs)
-- [Configuration détaillée](SETUP.md) - Guide de configuration des clés API
-- [Dépannage](TROUBLESHOOTING.md) - Solutions aux problèmes courants
+### **🚀 Guides de Démarrage**
+- **[Guide Express (5 min)](QUICK_START_GUIDE.md)**: Démarrage ultra-rapide
+- **[Tutoriel Complet](STEP_BY_STEP_TUTORIAL.md)**: Construction depuis zéro
 
-## 🤝 Contribution
+### **📖 Documentation Technique**
+- **[Documentation du Code](CODE_DOCUMENTATION.md)**: Vue d'ensemble architecturale
+- **[Documentation Détaillée](CODE_DETAILED_DOCUMENTATION.md)**: Détails techniques complets
+- **[Guide des Plugins](worker/PLUGINS_GUIDE.md)**: Utilisation et création de plugins
+- **[Configuration NO-CODE](worker/NO_CODE_CONFIGURATION_GUIDE.md)**: Guide de configuration sans coder
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- Signaler des bugs via les Issues
-- Proposer des améliorations
-- Soumettre des Pull Requests
+## 🎯 Cas d'Usage
 
-## 📝 Licence
+### Support Client
+```bash
+make plugin-add-sentiment
+make plugin-add-filter  
+make plugin-add-memory
+```
+→ Agent qui détecte les clients mécontents et escalade automatiquement
 
-Ce projet est un exemple éducatif de voixagent avec LiveKit.
+### Agent Éducatif
+```bash
+make plugin-add-memory
+make change-llm-anthropic
+```
+→ Agent qui mémorise les progrès et adapte les leçons
+
+### Agent Multilingue
+```bash
+# Configuration avec plugins de traduction
+make config-interactive
+```
+→ Agent avec détection automatique de langue
+
+## 🛠️ Développement
+
+### Mode Développement
+```bash
+make dev          # Démarrage + monitoring continu
+make logs         # Logs en temps réel
+make debug        # Mode debug complet
+```
+
+### Ajout de Nouveaux Plugins
+1. Implémenter l'interface `AgentPlugin`
+2. Enregistrer dans `PluginFactory`
+3. Configuration via CLI
+
+### Ajout de Nouveaux Providers
+1. Implémenter l'interface appropriée (LLM/STT/TTS)
+2. Enregistrer dans la factory correspondante
+3. Configuration dans `DynamicProviderManager`
+
+## 📞 Support et Maintenance
+
+### Commandes Utiles
+```bash
+make help          # Aide complète
+make debug         # Diagnostic système
+make clean         # Nettoyage fichiers temporaires
+make validate-config # Validation configuration
+```
+
+### Logs et Debug
+```bash
+make logs          # Logs combinés
+make logs-server   # Logs serveur uniquement
+make logs-worker   # Logs worker uniquement
+```
+
+## 🎉 Exemples d'Usage
+
+### Démarrage Complet
+```bash
+make demo          # Démarrage avec plugins d'exemple
+```
+
+### Changement de Provider
+```bash
+make change-llm-openai     # Changer vers OpenAI
+make change-tts-elevenlabs # Changer vers ElevenLabs
+```
+
+### Monitoring en Production
+```bash
+make production    # Démarrage production
+make metrics-watch # Surveillance continue
+```
 
 ---
 
-**Version 2.0** - Développé par [MamadouBousso](https://github.com/MamadouBousso)
+## 🏆 Fonctionnalités Clés
 
-> 🔄 **Migration depuis v1** : Ce repository est une version améliorée de [voixagent_livekit_v1](https://github.com/MamadouBousso/voixagent_livekit_v1.git)
+✅ **Architecture Modulaire** - Design patterns industriels  
+✅ **Configuration NO-CODE** - Changement de providers via CLI  
+✅ **Plugins Extensibles** - Ajout de fonctionnalités sans coder  
+✅ **Monitoring Complet** - Métriques temps réel et historique  
+✅ **Tests Complets** - Suite de tests unitaires et d'intégration  
+✅ **Documentation Exhaustive** - Guide complet pour développeurs  
 
+**Prêt pour la production avec une approche NO-CODE !** 🚀
