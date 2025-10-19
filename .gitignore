@@ -46,3 +46,19 @@ Thumbs.db
 
 # Configuration temporaire
 worker/config.py
+
+# Fichiers de sauvegarde et temporaires
+.env.bak
+.env.backup
+*.backup
+
+# Métriques et données runtime
+worker/shared_metrics.json
+
+# Fichiers de debug et rapports temporaires
+worker/livekit_*.json
+worker/debug_*.py
+worker/test_dispatch_*.py
+worker/test_entrypoint.py
+worker/test_final_validation.py
+worker/test_livekit_*.py
